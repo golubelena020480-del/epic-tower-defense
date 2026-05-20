@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Epic Tower Defense - 3D Game</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        #ui-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .ui-panel {
+            pointer-events: all;
+            background: rgba(20, 20, 30, 0.9);
+            border-radius: 12px;
+            padding: 20px;
+            border: 2px solid #667eea;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Top Panel */
+        #top-panel {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 40px;
+            min-width: 600px;
+            justify-content: center;
+        }
+
+        .stat-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: #00ff88;
+            text-shadow: 0 0 10px #00ff88;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #aaa;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #00ff88;
+        }
+
+        /* Left Panel - Tower Selection */
+        #left-panel {
+            position: absolute;
+            left: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            max-height: 80vh;
+            overflow-y: auto;
+            width: 200px;
+        }
+
+        .panel-title {
+            color: #667eea;
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .tower-button {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: 1px solid #00ff88;
+            border-radius: 8px;
+            color: #fff;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: left;
+            font-size: 12px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .tower-button:hover {
+            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+            box-shadow: 0 0 15px #00ff88;
+            transform: translateX(5px);
+        }
+
+        .tower-button.selected {
+            background: #00ff88;
+            color: #000;
+            box-shadow: 0 0 20px #00ff88;
+        }
+
+        .tower-button .name {
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+
+        .tower-button .cost {
+            font-size: 11px;
+            color: #ffd700;
+        }
+
+        /* Right Panel - Stats & Controls */
+        #right-panel {
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 220px;
+        }
+
+        .wave-info {
+            color: #00ff88;
+            font-size: 14px;
+            margin-bottom: 15px;
+            padding: 12px;
+            background: rgba(0, 255, 136, 0.1);
+            border-radius: 8px;
+            border-left: 3px solid #00ff88;
+        }
+
+        .wave-info .wave-number {
+            font-size: 20px;
+            font-weight: bold;
+            color: #00ff88;
+        }
+
+        .control-button {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+            border: 1px solid #00ff88;
+            border-radius: 8px;
+            color: #fff;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+            text-transform: uppercase;
+            font-size: 12px;
+        }
+
+        .control-button:hover {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            box-shadow: 0 0 15px #00ff88;
+        }
+
+        .control-button:active {
+            transform: scale(0.98);
+        }
+
+        .health-bar-container {
+            margin-top: 15px;
+            padding: 12px;
+            background: rgba(255, 0, 0, 0.1);
+            border-radius: 8px;
+            border-left: 3px solid #ff4444;
+        }
+
+        .health-bar-label {
+            color: #ff4444;
+            font-size: 12px;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+
+        .health-bar {
+            width: 100%;
+            height: 20px;
+            background: rgba(50, 50, 50, 0.8);
+            border-radius: 10px;
+            overflow: hidden;
+            border: 1px solid #ff4444;
+        }
+
+        .health-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00ff88 0%, #00cc6a 100%);
+            width: 100%;
+            transition: width 0.3s ease;
+            border-radius: 10px;
+        }
+
+        /* Bottom Panel - Message Log */
+        #bottom-panel {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            width: 300px;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+
+        .message-log {
+            font-size: 12px;
+            color: #00ff88;
+            line-height: 1.6;
+        }
+
+        .message-log .message {
+            padding: 5px;
+            margin-bottom: 3px;
+            background: rgba(0, 255, 136, 0.05);
+            border-radius: 4px;
+            border-left: 2px solid #00ff88;
+        }
+
+        /* Scrollbar Styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(100, 100, 100, 0.1);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #667eea;
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #00ff88;
+        }
+
+        /* Game Over Screen */
+        #game-over-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            z-index: 1000;
+        }
+
+        .game-over-content {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            border: 3px solid #00ff88;
+            box-shadow: 0 0 50px rgba(0, 255, 136, 0.3);
+        }
+
+        .game-over-content h1 {
+            font-size: 48px;
+            color: #00ff88;
+            margin-bottom: 20px;
+            text-shadow: 0 0 20px #00ff88;
+        }
+
+        .game-over-content p {
+            font-size: 24px;
+            color: #fff;
+            margin-bottom: 30px;
+        }
+
+        .game-over-content button {
+            padding: 15px 40px;
+            font-size: 16px;
+            background: #00ff88;
+            color: #000;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .game-over-content button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 20px #00ff88;
+        }
+
+        /* Tower Info Box */
+        #tower-info-box {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            width: 250px;
+            max-height: 250px;
+            display: none;
+            pointer-events: all;
+        }
+
+        .tower-info-content {
+            font-size: 12px;
+            color: #00ff88;
+            line-height: 1.8;
+        }
+
+        .tower-info-content .tower-name {
+            font-size: 16px;
+            font-weight: bold;
+            color: #ffd700;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #667eea;
+            padding-bottom: 8px;
+        }
+
+        .tower-info-line {
+            margin-bottom: 6px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .tower-info-label {
+            color: #aaa;
+        }
+
+        .tower-info-value {
+            color: #00ff88;
+            font-weight: bold;
+        }
+
+        /* Tooltip */
+        .tooltip {
+            position: absolute;
+            background: rgba(20, 20, 30, 0.95);
+            color: #00ff88;
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            border: 1px solid #667eea;
+            pointer-events: none;
+            z-index: 999;
+            max-width: 200px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas"></canvas>
+    
+    <div id="ui-container">
+        <!-- Top Panel -->
+        <div id="top-panel" class="ui-panel">
+            <div class="stat-item">
+                <div class="stat-label">Gold</div>
+                <div class="stat-value" id="gold-display">500</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">Lives</div>
+                <div class="stat-value" id="lives-display">20</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">Score</div>
+                <div class="stat-value" id="score-display">0</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">Towers</div>
+                <div class="stat-value" id="towers-display">0</div>
+            </div>
+        </div>
+
+        <!-- Left Panel - Tower Selection -->
+        <div id="left-panel" class="ui-panel">
+            <div class="panel-title">🎯 Towers</div>
+            <div id="tower-buttons-container"></div>
+        </div>
+
+        <!-- Right Panel -->
+        <div id="right-panel" class="ui-panel">
+            <div class="wave-info">
+                <div class="stat-label">Current Wave</div>
+                <div class="wave-number" id="wave-display">1</div>
+                <div style="font-size: 12px; margin-top: 5px; color: #888;">
+                    Enemies: <span id="enemies-display">0</span>
+                </div>
+            </div>
+            <button class="control-button" id="start-wave-btn">Start Wave</button>
+            <button class="control-button" id="speed-btn">Speed: 1x</button>
+            <div class="health-bar-container">
+                <div class="health-bar-label">🏰 Base Health</div>
+                <div class="health-bar">
+                    <div class="health-bar-fill" id="health-bar-fill"></div>
+                </div>
+                <div style="color: #ff4444; font-size: 11px; margin-top: 5px;">
+                    <span id="health-display">100</span> / 100
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom Panel - Message Log -->
+        <div id="bottom-panel" class="ui-panel">
+            <div class="message-log" id="message-log"></div>
+        </div>
+
+        <!-- Tower Info Box -->
+        <div id="tower-info-box" class="ui-panel">
+            <div class="tower-info-content" id="tower-info-content"></div>
+        </div>
+
+        <!-- Game Over Screen -->
+        <div id="game-over-screen">
+            <div class="game-over-content">
+                <h1 id="game-over-title">Game Over!</h1>
+                <p id="game-over-message">You survived <span id="final-wave">0</span> waves!</p>
+                <p id="final-score">Score: <span id="final-score-value">0</span></p>
+                <button onclick="location.reload()">Play Again</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="game.js"></script>
+</body>
+</html>
